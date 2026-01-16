@@ -30,7 +30,7 @@ jobs:
       # This addresses the AADSTS500011 "Resource principal not found" error
       - name: 'Initialize Load Test Service'
         run: |
-          az provider register --namespace Microsoft.LoadTestService
+          
           az account get-access-token --resource https://loadtest.azure-dev.com --output none
 
       - name: Run Azure Load Test
