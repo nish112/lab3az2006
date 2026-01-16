@@ -16,9 +16,9 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout GitHub Actions
+        uses: actions/checkout@v4
 
-      # Login using OpenID Connect
       - name: Azure Login
         uses: azure/login@v2
         with:
@@ -26,33 +26,30 @@ jobs:
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
-      # FIX: Force the CLI to acquire a token for the Load Testing Data Plane
-      # This resolves the AADSTS500011 error by initializing the resource audience
-      - name: 'Acquire Load Test Data Plane Token'
+      # FIX: Force registration and token acquisition for the Data Plane
+      # This addresses the AADSTS500011 "Resource principal not found" error
+      - name: 'Initialize Load Test Service'
         run: |
+          az provider register --namespace Microsoft.LoadTestService
           az account get-access-token --resource https://loadtest.azure-dev.com --output none
 
-      # Run the load test
-      - name: Azure Load Testing
+      - name: Run Azure Load Test
         uses: azure/load-testing@v1.1.27
         with:
           loadTestConfigFile: 'config.yaml'
-          loadTestResource: ${{ env.LOAD_TEST_RESOURCE}}
+          loadTestResource: ${{ env.LOAD_TEST_RESOURCE }}
           resourceGroup: ${{ env.RESOURCE_GROUP }}
           env: |
             [
               {
-              "name": "webapp",
-              "value": "${{ env.AZURE_WEBAPP_NAME }}.azurewebsites.net"
+                "name": "webapp",
+                "value": "${{ env.AZURE_WEBAPP_NAME }}.azurewebsites.net"
               }
             ]
 
-      # Upload the results
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
-        if: always() # Ensures results are uploaded even if the test fails
+        if: always() # Upload results even if thresholds are not met
         with:
           name: loadTestResults
-          path: ${{github.workspace}}/loadTest
-
-          
+          path: ${{ github.workspace }}/loadTest
