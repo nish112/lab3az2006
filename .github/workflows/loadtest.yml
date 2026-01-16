@@ -7,28 +7,30 @@ permissions:
   contents: read  # This is required for actions/checkout
 
 env:
-  # For AZURE_WEBAPP_NAME enter just the name, not the full URL.
   RESOURCE_GROUP: az2006-rg
   LOAD_TEST_RESOURCE: az2006loadtest
   AZURE_WEBAPP_NAME: az2006app140
 
 jobs:
-  # This workflow consists of a single job called "loadtest"
-
   loadtest:
-
     runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v4
 
-      #Login in your azure subscription using OpenID Connect (credentials stored as GitHub secrets in repo)
+      # Login using OpenID Connect
       - name: Azure Login
         uses: azure/login@v2
         with:
           client-id: ${{ secrets.AZURE_CLIENT_ID }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      # FIX: Force the CLI to acquire a token for the Load Testing Data Plane
+      # This resolves the AADSTS500011 error by initializing the resource audience
+      - name: 'Acquire Load Test Data Plane Token'
+        run: |
+          az account get-access-token --resource https://loadtest.azure-dev.com --output none
 
       # Run the load test
       - name: Azure Load Testing
@@ -45,9 +47,10 @@ jobs:
               }
             ]
 
-      # upload the published website code artifacts
+      # Upload the results
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
+        if: always() # Ensures results are uploaded even if the test fails
         with:
           name: loadTestResults
           path: ${{github.workspace}}/loadTest
