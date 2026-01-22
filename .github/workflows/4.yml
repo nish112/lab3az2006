@@ -14,11 +14,11 @@ jobs:
   display-context-job:
     name: "Understanding Contexts and Variables"
     runs-on: ubuntu-latest
-    environment: training # Connects to the 'training' environment variables
+    environment: ENV_STATUS # Connects to the 'training' environment variables
     
     steps:
       - name: "1. Accessing 'vars' Context (Org, Repo, Env)"
-        # Demonstrates retrieval of UI-defined variables (image_72b470.png)
+        # Demonstrates retrieval of UI-defined variables 
         run: |
           echo "Organization Name: ${{ vars.ORG_NAME }}"
           echo "Project Code:    ${{ vars.REPO_PROJECT_CODE }}"
