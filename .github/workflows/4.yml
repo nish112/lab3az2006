@@ -1,43 +1,43 @@
 name: trainee-context-demo
 
 on: 
-  workflow_dispatch: 
+  workflow_dispatch: # trigger it manually
 
 env:
-  # Demonstrating Literals (image_72b434.png)
-  WORKFLOW_VERSION: ${{ 1.0 }}                # Number literal
-  IS_TRAINING_ACTIVE: ${{ true }}              # Boolean literal
-  GLOBAL_MESSGE: "Welcome Trainees!"           # String literal
+  # Using Literals (image_72b434.png)
+  WORKFLOW_VERSION: ${{ 1.0 }}          	   # Number literal
+  IS_TRAINING_ACTIVE: ${{ true }}       	   # Boolean literal
+  GLOBAL_MESSGE: "Welcome Trainees!"    	   # String literal
+  GLOBAL_MESSGE2: ${{ "Welcome Trainees!" }}       # String literal
 
 jobs:
   display-context-job:
     name: "Understanding Contexts and Variables"
     runs-on: ubuntu-latest
-    environment: training # The name of the environment you created in Settings
+    environment: training # Connects to the 'training' environment variables
     
     steps:
-      - name: "1. Accessing 'vars' Context"
-        # Accessing UI-defined variables
+      - name: "1. Accessing 'vars' Context (Org, Repo, Env)"
+        # Demonstrates retrieval of UI-defined variables (image_72b470.png)
         run: |
           echo "Organization Name: ${{ vars.ORG_NAME }}"
-          echo "Project Code:     ${{ vars.REPO_PROJECT_CODE }}"
-          echo "Env Var (Custom): ${{ vars.training }}"
+          echo "Project Code:    ${{ vars.REPO_PROJECT_CODE }}"
+          echo "Environment Status: ${{ vars.training }}"
 
-      - name: "2. Accessing 'secrets' Context"
-        # Retrieving Org and Repo level secrets
-        # Note: Secrets are masked (***) in logs for security
+      - name: "2. Accessing 'github' Context"
+        # Shows metadata about the current run (image_72b470.png)
         run: |
-          echo "Org Secret:  ${{ secrets.ORG_LEVEL_SECRET }}"
-          echo "Repo Secret: ${{ secrets.REPO_LEVEL_SECRET }}"
+          echo "Actor (User):     ${{ github.actor }}"
+          echo "Workflow Name:    ${{ github.workflow }}"
+          echo "Event Trigger:    ${{ github.event_name }}"
 
-      - name: "3. System Contexts (github & job)"
-        # Metadata about the run and job
+      - name: "3. Accessing 'job' Context"
+        # Shows metadata about the currently executing job (image_72b470.png)
         run: |
-          echo "Actor:       ${{ github.actor }}"
-          echo "Workflow:    ${{ github.workflow }}"
-          echo "Job Status:  ${{ job.status }}"
+          echo "Job Status:       ${{ job.status }}"
+          echo "Runner OS:        ${{ runner.os }}"
 
       - name: "4. Logic with Operators and Literals"
-        # Combining literals and operators
+        # Using equality and logical AND (image_72b434.png)
         if: ${{ env.IS_TRAINING_ACTIVE == true && env.WORKFLOW_VERSION != 0 }}
         run: echo "The logic test passed because version is ${{ env.WORKFLOW_VERSION }}"
