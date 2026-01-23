@@ -2,8 +2,6 @@ name: Load test
 
 on: [workflow_dispatch]
 
-# REMOVED: permissions block (not needed for SP secret)
-
 env:
   RESOURCE_GROUP: az2006-rg
   LOAD_TEST_RESOURCE: az2006loadtest
@@ -18,10 +16,10 @@ jobs:
       - name: Azure Login
         uses: azure/login@v2
         with:
-          # Use the bundled credentials secret instead of individual OIDC parameters
+          # This should be your JSON secret containing the clientSecret
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      # Keep the handshake to ensure the Data Plane principal is recognized
+      # Now that the Enterprise App is created, this priming step will succeed
       - name: 'Initialize Load Test Token'
         run: |
           az account get-access-token --resource https://loadtest.azure-dev.com --output none
