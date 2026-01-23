@@ -1,0 +1,48 @@
+name: Load test
+
+on: [workflow_dispatch]
+
+# REMOVED: permissions block (not needed for SP secret)
+
+env:
+  RESOURCE_GROUP: az2006-rg
+  LOAD_TEST_RESOURCE: az2006loadtest
+  AZURE_WEBAPP_NAME: az2006app140
+
+jobs:
+  loadtest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          # Use the bundled credentials secret instead of individual OIDC parameters
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      # Keep the handshake to ensure the Data Plane principal is recognized
+      - name: 'Initialize Load Test Token'
+        run: |
+          az account get-access-token --resource https://loadtest.azure-dev.com --output none
+
+      - name: Run Azure Load Test
+        uses: azure/load-testing@v1.1.27
+        with:
+          loadTestConfigFile: 'config.yaml'
+          loadTestResource: ${{ env.LOAD_TEST_RESOURCE }}
+          resourceGroup: ${{ env.RESOURCE_GROUP }}
+          env: |
+            [
+              {
+                "name": "webapp",
+                "value": "${{ env.AZURE_WEBAPP_NAME }}.azurewebsites.net"
+              }
+            ]
+
+      - name: Upload Results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: loadTestResults
+          path: ${{ github.workspace }}/loadTest
